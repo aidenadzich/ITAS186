@@ -32,7 +32,7 @@ $maps = [
 
 ];
 
-$requested_map = $_GET['map'] ?? 'main_map';
+$requested_map = $_GET['map'] ?? 'spawn_map';
 
 if (isset($maps[$requested_map])) {
     header("Content-Type: application/json");

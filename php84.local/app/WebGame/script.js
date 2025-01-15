@@ -2,18 +2,17 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Constants
+// Scaling
 const TILE_SIZE = 32;
 const PLAYER_SCALE = 3;
 
-// Initialize map and player
-let map = {}; // All maps loaded from the backend
-let currentMap = "spawn_map"; // Start map
+let map = {};
+let currentMap = "spawn_map"; // Set the map to start on
 let maps = {};
 
 const player = {
-    x: 8, // Starting column
-    y: 6  // Starting row
+    x: 8, // Starting X Pos
+    y: 6  // Starting Y Pos
 };
 
 // Load images
@@ -31,6 +30,8 @@ images.ground.src = "images/ground.png";
 images.cave.src = "images/cave.png";
 images.oldMan.src = "images/oldman.png";
 
+let groundTile = images.cave;
+
 // Debug image loading
 const loadedImages = [];
 Object.keys(images).forEach((key) => {
@@ -46,7 +47,7 @@ Object.keys(images).forEach((key) => {
 });
 
 // Load map from PHP
-function loadMap(mapName, callback) {
+function loadMap(mapName) {
     fetch("map.php?map=" + mapName)
         .then(response => {
             if (!response.ok) throw new Error("Failed to fetch map data.");
@@ -55,9 +56,9 @@ function loadMap(mapName, callback) {
         .then(data => {
             console.log("Map data loaded:", data); // Check the map data
             maps[mapName] = data;
-            map = maps[mapName]; // Set current map
-            if (callback) callback(); // Call the callback after the map is loaded
-            drawGame();
+            map = data; // Set current map
+            // if (callback) callback(); // Call the callback after the map is loaded
+            // drawGame();
         })
         .catch(err => console.error("Error loading map:", err));
 }
@@ -67,40 +68,24 @@ function switchMap(newMap) {
     console.log(`Switching to ${newMap}`);
     if (!maps[newMap]) {
         // Load the map if not already loaded
-        loadMap(newMap, () => {
-            // Set player position based on the map
-            if (newMap === "swordcave") {
-                player.x = 8;
-                player.y = 10;
-            } else if (newMap === "spawn_map") {
-                player.x = 5;
-                player.y = 1;
-            } else {
-                // Default player position
-                player.x = 8;
-                player.y = 6;
-            }
-            drawGame();
-        });
+        loadMap(newMap);
     } else {
         map = maps[newMap];
-        currentMap = newMap;
-
-        // Set player position based on the map
-        if (newMap === "swordcave") {
-            player.x = 8;
-            player.y = 10;
-        } else if (newMap === "spawn_map") {
-            player.x = 5;
-            player.y = 1;
-        } else {
-            // Default player position
-            player.x = 8;
-            player.y = 6;
-        }
-
-        drawGame();
     }
+    currentMap = newMap;
+    if (newMap === "swordcave") {
+        groundTile = images.cave;
+        player.x = 8;
+        player.y = 10;
+    } else if (newMap === "spawn_map") {
+        player.x = 5;
+        player.y = 1;
+    } else {
+        // Default player position
+        player.x = 8;
+        player.y = 6;
+    }
+    drawGame();
 }
 
 
@@ -117,15 +102,35 @@ function drawGame() {
     // Draw the map
     map.forEach((row, rowIndex) => {
         row.forEach((tile, colIndex) => {
-            if (tile === 1) {
-                // Draw obstacle tile
-                ctx.drawImage(
-                    images.wall,
-                    colIndex * TILE_SIZE,
-                    rowIndex * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
-                );
+            if (tile === 0 || tile === '0') {
+                // Walkable tile, apply map-specific logic
+                if (currentMap === "swordcave") {
+                    groundTile = images.cave;
+                    ctx.drawImage(
+                        groundTile,
+                        colIndex * TILE_SIZE,
+                        rowIndex * TILE_SIZE,
+                        TILE_SIZE,
+                        TILE_SIZE
+                    );
+                } else {
+                    ctx.drawImage(
+                        groundTile,
+                        colIndex * TILE_SIZE,
+                        rowIndex * TILE_SIZE,
+                        TILE_SIZE,
+                        TILE_SIZE
+                    );
+                }
+            } else if (tile === 1) {
+            // Draw obstacle tile
+            ctx.drawImage(
+                images.wall,
+                colIndex * TILE_SIZE,
+                rowIndex * TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE
+            );
             } else if (tile === 'B') {
                 // Draw cave entrance
                 ctx.drawImage(
@@ -136,7 +141,7 @@ function drawGame() {
                     TILE_SIZE
                 );
             } else if (tile === 'W') {
-                // Draw water or specific ground tile
+                // Draw warp tile
                 ctx.drawImage(
                     images.ground,
                     colIndex * TILE_SIZE,
@@ -153,25 +158,6 @@ function drawGame() {
                     TILE_SIZE,
                     TILE_SIZE
                 );
-            } else if (tile === 0 || tile === '0') {
-                // Walkable tile, apply map-specific logic
-                if (currentMap === "swordcave") {
-                    ctx.drawImage(
-                        images.cave,
-                        colIndex * TILE_SIZE,
-                        rowIndex * TILE_SIZE,
-                        TILE_SIZE,
-                        TILE_SIZE
-                    );
-                } else {
-                    ctx.drawImage(
-                        images.ground,
-                        colIndex * TILE_SIZE,
-                        rowIndex * TILE_SIZE,
-                        TILE_SIZE,
-                        TILE_SIZE
-                    );
-                }
             } else {
                 // Default fallback for unexpected tiles
                 ctx.fillStyle = "pink"; // Debug color for unhandled tiles
