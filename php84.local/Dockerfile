@@ -6,10 +6,17 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    vim
+    vim \
+    mariadb-client
 
 # Install PHP extensions
-RUN docker-php-ext-install zip
+RUN docker-php-ext-install zip mysqli pdo pdo_mysql
+
+# Install and enable Xdebug
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+
+# Configure Xdebug
+COPY xdebug.ini /usr/local/etc/php/conf.d/
 
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 

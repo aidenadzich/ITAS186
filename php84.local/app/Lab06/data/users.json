@@ -1,0 +1,1 @@
+{"admin":{"username":"admin","email":"admin@example.com","password":"$2y$12$c\/Jb44lV0fDWzppHoHJMOes\/UjODNTkF32vdDXXjKA8qkHOODUsqm","role":"Admin"},"test":{"username":"test","email":"test@example.com","password":"$2y$12$A7uVHF6\/YRAsEpuYLi7WXej\/MJrR2M9HsPgD2dcnXKSogbGX9aPgy","role":"Member"}}
